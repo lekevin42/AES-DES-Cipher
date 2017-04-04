@@ -107,6 +107,11 @@ void choose_AES(char* key , string option, string input_file, string output_file
 		int padding = 15;
 		while (fread(block, 1, 16, infile)){
 			block = cipher->decrypt(block);
+			
+			while (block[padding] == '0'){
+				block[padding] = ' ';
+				padding--;
+			}
 
 
 			fwrite(block, 1, 16, outfile);
