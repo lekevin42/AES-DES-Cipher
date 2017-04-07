@@ -12,6 +12,7 @@ using namespace std;
 void choose_cipher(string cipher_name, char* key, string option, string input_file, string output_file);
 
 void choose_AES(char* key, string option, string input_file, string output_file);
+void choose_DES(char* key , string option, string input_file, string output_file);
 
 int main(int argc, char** argv)
 {
@@ -33,7 +34,6 @@ int main(int argc, char** argv)
 		exit(-1);
 	}
 	
-
 	choose_cipher(cipher_name, key, option, input_file, output_file);
 	
 	
@@ -46,7 +46,7 @@ void choose_cipher(string cipher_name, char* key, string option, string input_fi
 	}
 	
 	else if (cipher_name == "DES"){
-		
+		choose_DES(key, option, input_file, output_file);
 	}
 		
 	else{
@@ -84,7 +84,6 @@ void choose_AES(char* key , string option, string input_file, string output_file
 		if (!cipher->setKey((unsigned char*)key)){
 			fprintf(stderr, "AES_set_encrypt_key() failed!\n");
 		}
-
 		int count_bytes = 0;
 		
 		while (count_bytes = fread(block, 1, 16, infile)){
@@ -115,6 +114,79 @@ void choose_AES(char* key , string option, string input_file, string output_file
 
 
 			fwrite(block, 1, 16, outfile);
+		}	
+	}
+	
+	else{
+		cout << "Error option was not <ENC/DEC>" << endl;
+		exit(-1);
+	}
+	
+	fclose(infile);
+	fclose(outfile);
+	
+	delete block;
+	delete cipher;
+}
+
+void choose_DES(char* key , string option, string input_file, string output_file){
+	CipherInterface* cipher = new DES();
+	FILE* infile = fopen(input_file.c_str(), "r");
+	FILE* outfile = fopen(output_file.c_str(), "w");
+	unsigned char* block = new unsigned char[16];
+	
+	if(!cipher)
+	{
+		fprintf(stderr, "ERROR [%s %s %d]: could not allocate memory\n",	
+		__FILE__, __FUNCTION__, __LINE__);
+		exit(-1);
+	}
+	
+	if (infile == NULL){
+		cout << "File " << input_file << " could not be opened" << endl;
+		exit(-1);
+	}
+	
+	if (outfile == NULL){
+		cout << "File " << output_file << " could not be opened" << endl;
+		exit(-1);
+	}
+	
+	if (option == "ENC"){
+		if (!cipher->setKey((unsigned char*)key)){
+			fprintf(stderr, "DES_set_encrypt_key() failed!\n");
+		}
+
+		int count_bytes = 0;
+		
+		while (count_bytes = fread(block, 1, 8, infile)){
+			while (count_bytes < 8){
+				block[count_bytes] = '0';
+				count_bytes++;	
+				
+			}
+			block = cipher->encrypt(block);
+			fwrite(block, 1, 8, outfile);
+		}
+		
+	}
+			
+	else if (option == "DEC"){
+		if (!cipher->setKey((unsigned char*)key)){
+			fprintf(stderr, "DES_set_decrypt_key() failed!\n");
+		}
+			
+		int padding = 7;
+		while (fread(block, 1, 8, infile)){
+			block = cipher->decrypt(block);
+			
+			while (block[padding] == '0'){
+				block[padding] = ' ';
+				padding--;
+			}
+
+
+			fwrite(block, 1, 8, outfile);
 		}	
 	}
 	

@@ -1,5 +1,8 @@
 #include "DES.h"
 
+#define ENC 1
+#define DEC 0
+#include <iostream>
 /**
  * Sets the key to use
  * @param key - the key to use
@@ -27,7 +30,8 @@ bool DES::setKey(const unsigned char* keyArray)
 		
 	/* Go through the entire key character by character */
 	while(desKeyIndex != 8)
-	{
+	{	
+
 		/* Convert the key if the character is valid */
 		if((this->des_key[desKeyIndex] = twoCharToHexByte(keyArray + keyIndex)) == 'z')
 			return false;
@@ -68,18 +72,31 @@ bool DES::setKey(const unsigned char* keyArray)
 unsigned char* DES::encrypt(const unsigned char* plaintext)
 {
 	//LOGIC:
+	/* unsigned char plainText[9];
+	strncpy(plainText, plaintext, 9);
+	unsigned char cipherText[9];
+	*/
 	//1. Check to make sure that the block is exactly 8 characters (i.e. 64 bits)
 	//2. Declate an array DES_LONG block[2];
+	DES_LONG in[2];
 	//3. Use ctol() to convert the first 4 chars into long; store the result in block[0]
+	in[0] = ctol(((unsigned char*)plaintext));
 	//4. Use ctol() to convert the second 4 chars into long; store the resul in block[1]
+	in[1] = ctol(((unsigned char*)plaintext) + 4);
 	//5. Perform des_encrypt1 in order to encrypt the block using this->key (see sample codes for details)
+	des_encrypt1(in, this->key, ENC);
+	unsigned char* cipherText = new unsigned char[8];
+	memset(cipherText, 0, 9);
 	//6. Convert the first ciphertext long to 4 characters using ltoc()
+	ltoc(in[0], cipherText);
 	//7. Convert the second ciphertext long to 4 characters using ltoc()
+	ltoc(in[1], cipherText + 4);
 	//8. Save the results in the the dynamically allocated char array 
 	// (e.g. unsigned char* bytes = nerw unsigned char[8]).
+	//bytes = cipherText[8];
 	//9. Return the pointer to the dynamically allocated array.
 	
-	return NULL;
+	return cipherText;
 }
 
 /**
@@ -91,6 +108,21 @@ unsigned char* DES::decrypt(const unsigned char* ciphertext)
 {
 	//LOGIC:
 	// Same logic as encrypt(), except in step 5. decrypt instead of encrypting
+	DES_LONG in[2];
+
+	in[0] = ctol(((unsigned char*)ciphertext));
+
+	in[1] = ctol(((unsigned char*)ciphertext) + 4);
+
+	des_encrypt1(in, this->key, DEC);
+
+	unsigned char* plainText = new unsigned char[8];
+	memset(plainText, 0, 9);
+	ltoc(in[0], plainText);
+	//7. Convert the second ciphertext long to 4 characters using ltoc()
+	ltoc(in[1], plainText + 4);
+	
+	return plainText;
 }
 
 /**
@@ -176,7 +208,7 @@ unsigned char DES::twoCharToHexByte(const unsigned char* twoChars)
 	 * lower to upper nibble.
 	 */
 	singleByte = (singleByte << 4);
-	
+
 	/* Conver the second character */
 	if((secondChar = charToHex(twoChars[1])) == 'z')
 		return 'z'; 
